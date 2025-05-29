@@ -1,0 +1,3 @@
+vectorstore_data/
+reranked_results.txt
+reward_logs.jsonl
