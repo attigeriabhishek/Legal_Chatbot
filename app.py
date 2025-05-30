@@ -10,7 +10,7 @@ from langchain.retrievers import BM25Retriever, EnsembleRetriever
 from transformers import AutoTokenizer, AutoModelForCausalLM
 # from rerankers import Reranker  # I'll define this for you below
 
-st.set_page_config(layout="wide")
+st.set_page_config(page_title="AI Assistant", page_icon="💬", layout="wide")
 SAVE_DIR = "vectorstore_data"
 MODEL_NAME = "BAAI/bge-large-en-v1.5"
 LLM_MODEL = "mistralai/Mistral-7B-Instruct-v0.3"
@@ -127,9 +127,6 @@ Answer:"""
 
     return final_answer
 
-st.title("📚 Legal & History Document Search")
-
-query = st.text_input("🔍 Enter your query")
 import pandas as pd
 import io
 def render_answer(answer: str):
@@ -149,19 +146,90 @@ def render_answer(answer: str):
 
     return "text", answer
 
+# st.title("📚 Legal & History Document Search")
+
+# # query = st.text_input("🔍 Enter your query")
+# query = st.chat_input("🔍 Enter your query")
+
+# if query:
+#     st.markdown("## 🤖 Responses")
+#     for name in FOLDERS:
+#         with st.spinner(f"🔎 Searching in `{name}`..."):
+#             reranked_results = hybrid_retrieval_rerank(name, query, top_k=5)
+
+#             if name.lower() == "history":
+#                 # Write results to a text file
+#                 with open("reranked_results.txt", "w", encoding="utf-8") as f:
+#                     for result in reranked_results:
+#                         f.write(str(result) + "\n")
+
+#             context = "\n\n".join([doc.page_content for doc in reranked_results])
+
+#             if context.strip():
+#                 answer = generate_answer(query, context, max_words=2000)
+#             else:
+#                 answer = "❌ No relevant content found."
+
+#             st.subheader(f"📁 {name.capitalize()}")
+#             # st.markdown(f"> {answer}")
+#             content_type, content = render_answer(answer)
+#             if content_type == "table":
+#                 st.dataframe(content, use_container_width=True)
+#             else:
+#                 st.markdown(f"> {content}")
+# --- Initialize state ---
+if "chat_mode" not in st.session_state:
+    st.session_state.chat_mode = True  # Toggle between chatbot and doc search
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+with st.sidebar:
+    st.title("📚 About")
+    st.markdown("""
+    This AI assistant helps with:
+    - Legal document understanding
+    - Indian law interpretation
+    - Legal procedures and requirements
+    - Historical legal context
+    """)
+
+    st.subheader("System Info")
+    device_info = "GPU" if torch.cuda.is_available() else "CPU"
+    if torch.cuda.is_available():
+        device_info += f" ({torch.cuda.get_device_name(0)})"
+    st.text(f"Device: {device_info}")
+
+    st.subheader("Models Used")
+    st.markdown(f"""
+    - **Embedding**: `{MODEL_NAME}`  
+    - **LLM**: `{LLM_MODEL}`  
+    - **Reranker**: `{RERANKER_MODEL}`
+    """)
+
+
+    # st.subheader("Tips for Better Search")
+    # st.markdown("""
+    # - Use specific legal terms
+    # - Try full sections (e.g., "Section 302 IPC")
+    # - Include year or parties in case queries
+    # """)
+
+
+st.title("📚 Legal & History Document Search")
+query = st.chat_input("🔍 Enter your query")
+
 if query:
-    st.markdown("## 🤖 Responses")
+    st.markdown(f"### 🤖 Responses for: _\"{query}\"_")
     for name in FOLDERS:
         with st.spinner(f"🔎 Searching in `{name}`..."):
             reranked_results = hybrid_retrieval_rerank(name, query, top_k=5)
 
             if name.lower() == "history":
-                # Write results to a text file
                 with open("reranked_results.txt", "w", encoding="utf-8") as f:
                     for result in reranked_results:
                         f.write(str(result) + "\n")
 
-            context = "\n\n".join([doc.page_content for doc in reranked_results])
+            context = "\n\n".join([doc.page_content for doc in reranked_results]) if reranked_results else ""
 
             if context.strip():
                 answer = generate_answer(query, context, max_words=2000)
@@ -169,7 +237,6 @@ if query:
                 answer = "❌ No relevant content found."
 
             st.subheader(f"📁 {name.capitalize()}")
-            # st.markdown(f"> {answer}")
             content_type, content = render_answer(answer)
             if content_type == "table":
                 st.dataframe(content, use_container_width=True)

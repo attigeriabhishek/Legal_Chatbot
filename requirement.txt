@@ -3,7 +3,7 @@ transformers
 sentence-transformers
 faiss-gpu
 pypdf
-numpy
+numpy<2.0
 streamlit
 pdfminer
 pdfminer.six
@@ -20,3 +20,5 @@ pytesseract
 pdf2image
 pymupdf
 bert_score
+sentencepiece
+rank_bm25
